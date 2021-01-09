@@ -6,4 +6,5 @@
   :pathname "src"
   :depends-on ("cl-prattler/tokenizer"
                "cl-prattler/parser"
+               "cl-prattler/ast"
                "cl-prattler/main"))
