@@ -9,15 +9,15 @@
 
 (defun token-type-p (thing)
   (or
-   (string= thing "number")
-   (string= thing "eof")
-   (string= thing "+")
-   (string= thing "-")
-   (string= thing "*")
-   (string= thing "/")
-   (string= thing "^")
-   (string= thing "(")
-   (string= thing ")")))
+   (eql thing :number)
+   (eql thing :eof)
+   (eql thing :plus)
+   (eql thing :minus)
+   (eql thing :asterisk)
+   (eql thing :slash)
+   (eql thing :caret)
+   (eql thing :left-paren)
+   (eql thing :right-paren)))
 
 (deftype token-type (&optional type)
   (declare (ignore type))
@@ -130,7 +130,7 @@
       while (or (digit-char-p current-char)
                 (char= current-char #\.))
       do (eat-it tokenizer))
-    (make-instance 'token :token-kind "number" :token-spelling (parse-number *current-spelling*))))
+    (make-instance 'token :token-kind :number :token-spelling (parse-number *current-spelling*))))
 
 (defmethod tokenize ((tokenizer tokenizer))
   (setf *current-spelling* (make-array 0 :element-type 'character
@@ -141,40 +141,36 @@
       (skip-whitespace tokenizer)
       (cond
         ((char= current-char #\Nul)
-         (setf current-token (make-instance 'token :token-kind "eof" :token-spelling "eof")))
+         (setf current-token (make-instance 'token :token-kind :eof :token-spelling "eof")))
         ((char= current-char #\()
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\( :token-spelling #\())))
+           (setf current-token (make-instance 'token :token-kind :left-paren :token-spelling #\())))
         ((char= current-char #\))
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\) :token-spelling #\)))))
+           (setf current-token (make-instance 'token :token-kind :right-paren :token-spelling #\)))))
         ((digit-char-p current-char)
          (setf current-token (read-number tokenizer)))
         ((char= current-char #\+)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\+ :token-spelling #\+))))
+           (setf current-token (make-instance 'token :token-kind :plus :token-spelling #\+))))
         ((char= current-char #\-)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\- :token-spelling #\-))))
-        ((char= current-char #\-)
-         (progn
-           (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\- :token-spelling #\-))))
+           (setf current-token (make-instance 'token :token-kind :minus :token-spelling #\-))))
         ((char= current-char #\*)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\* :token-spelling #\*))))
+           (setf current-token (make-instance 'token :token-kind :asterisk :token-spelling #\*))))
         ((char= current-char #\/)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\/ :token-spelling #\/))))
+           (setf current-token (make-instance 'token :token-kind :slash :token-spelling #\/))))
         ((char= current-char #\^)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :token-kind #\^ :token-spelling #\^))))
+           (setf current-token (make-instance 'token :token-kind :caret :token-spelling #\^))))
         (t (error "unexpected character ~a while tokenizing input" current-char)))
       current-token)))
