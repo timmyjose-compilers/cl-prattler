@@ -5,4 +5,5 @@
   :author "Timmy Jose<zoltan.jose@gmail.com>"
   :pathname "src"
   :depends-on ("cl-prattler/tokenizer"
+               "cl-prattler/parser"
                "cl-prattler/main"))

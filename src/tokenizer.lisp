@@ -1,12 +1,15 @@
 (defpackage #:cl-prattler/tokenizer
-     (:use #:common-lisp)
-     (:export #:tokenizer))
+  (:use #:common-lisp)
+  (:export #:tokenizer
+           #:tokenize
+           #:token-kind
+           #:token-spelling))
 
 (in-package #:cl-prattler/tokenizer)
 
 (defun token-type-p (thing)
   (or
-   (typep thing 'number)
+   (string= thing "number")
    (string= thing "eof")
    (string= thing "+")
    (string= thing "-")
@@ -22,22 +25,22 @@
 
 (defclass token ()
   ((kind
-    :initarg :kind
-    :accessor kind)
+    :initarg :token-kind
+    :accessor token-kind)
    (spelling
-    :initarg :spelling
-    :accessor spelling)))
+    :initarg :token-spelling
+    :accessor token-spelling)))
 
 (defmethod initialize-instance :after ((tok token) &rest rest)
   (declare (ignore rest))
-  (with-accessors ((kind kind)) tok
+  (with-accessors ((kind token-kind)) tok
     (assert (typep kind 'token-type))))
 
 (defmethod print-object ((obj token) stream)
   (print-unreadable-object (obj stream :type t :identity t)
     (with-standard-io-syntax
-      (with-accessors ((kind kind) (spelling spelling)) obj
-        (format stream "<:~a;~a>" kind spelling)))))
+      (with-accessors ((kind token-kind) (spelling token-spelling)) obj
+        (format stream "<:~a,~a>" kind spelling)))))
 
 (defparameter *current-spelling* nil)
 
@@ -56,9 +59,6 @@
       tokenizer
     (setf current-char (char input 0))))
 
-(defgeneric skip (tokenizer c)
-  (:documentation "skip the current character if it matches c"))
-
 (defgeneric skip-it (tokenizer)
   (:documentation "unconditionally sklp the current character"))
 
@@ -73,17 +73,6 @@
 
 (defgeneric tokenize (tokenizer)
   (:documentation "retrieve the next token from the stream"))
-
-(defmethod skip ((tokenizer tokenizer) c)
-  (with-accessors ((input input)
-                   (current-char current-char))
-      tokenizer
-    (if (char= c current-char)
-        (if (> (length input) 1)
-            (progn
-              (setf input (subseq input 1))
-              (setf current-char (char input 0)))
-            (setf current-char #\Nul)))))
 
 (defmethod skip-it ((tokenizer tokenizer))
   (with-accessors ((input input)
@@ -141,7 +130,7 @@
       while (or (digit-char-p current-char)
                 (char= current-char #\.))
       do (eat-it tokenizer))
-    (make-instance 'token :kind 0 :spelling (parse-number *current-spelling*))))
+    (make-instance 'token :token-kind "number" :token-spelling (parse-number *current-spelling*))))
 
 (defmethod tokenize ((tokenizer tokenizer))
   (setf *current-spelling* (make-array 0 :element-type 'character
@@ -152,40 +141,40 @@
       (skip-whitespace tokenizer)
       (cond
         ((char= current-char #\Nul)
-         (setf current-token (make-instance 'token :kind "eof" :spelling "eof")))
+         (setf current-token (make-instance 'token :token-kind "eof" :token-spelling "eof")))
         ((char= current-char #\()
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\( :spelling #\())))
+           (setf current-token (make-instance 'token :token-kind #\( :token-spelling #\())))
         ((char= current-char #\))
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\) :spelling #\)))))
+           (setf current-token (make-instance 'token :token-kind #\) :token-spelling #\)))))
         ((digit-char-p current-char)
          (setf current-token (read-number tokenizer)))
         ((char= current-char #\+)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\+ :spelling #\+))))
+           (setf current-token (make-instance 'token :token-kind #\+ :token-spelling #\+))))
         ((char= current-char #\-)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\- :spelling #\-))))
+           (setf current-token (make-instance 'token :token-kind #\- :token-spelling #\-))))
         ((char= current-char #\-)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\- :spelling #\-))))
+           (setf current-token (make-instance 'token :token-kind #\- :token-spelling #\-))))
         ((char= current-char #\*)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\* :spelling #\*))))
+           (setf current-token (make-instance 'token :token-kind #\* :token-spelling #\*))))
         ((char= current-char #\/)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\/ :spelling #\/))))
+           (setf current-token (make-instance 'token :token-kind #\/ :token-spelling #\/))))
         ((char= current-char #\^)
          (progn
            (eat-it tokenizer)
-           (setf current-token (make-instance 'token :kind #\^ :spelling #\^))))
+           (setf current-token (make-instance 'token :token-kind #\^ :token-spelling #\^))))
         (t (error "unexpected character ~a while tokenizing input" current-char)))
       current-token)))
